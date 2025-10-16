@@ -22,6 +22,38 @@ const Section = styled.div`
   margin-bottom: 3rem;
 `;
 
+const GridContainer = styled.div`
+  display: grid;
+  grid-template-columns: 50% 50%;
+  gap: 2rem;
+  margin-bottom: 2rem;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  @media (max-width: 768px) {
+    gap: 1.5rem;
+  }
+`;
+
+const LeftColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+const RightColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+const SampleSection = styled.div`
+  margin-top: 2rem;
+`;
+
 const Label = styled.label`
   display: block;
   font-weight: 600;
@@ -106,17 +138,22 @@ const HighlightedText = styled.div`
   font-size: 16px;
   line-height: 1.8;
   min-height: 300px;
+  max-height: 400px;
+  overflow-y: auto;
   white-space: pre-wrap;
   word-wrap: break-word;
+  word-break: break-word;
 
   @media (max-width: 768px) {
     min-height: 250px;
+    max-height: 350px;
     font-size: 15px;
     padding: 1.5rem;
   }
 
   @media (max-width: 480px) {
     min-height: 200px;
+    max-height: 300px;
     padding: 1.25rem;
     font-size: 14px;
   }
@@ -205,6 +242,8 @@ const Legend = styled.div`
   border-radius: ${props => props.theme.borderRadius.md};
   padding: 1rem;
   margin-bottom: 1rem;
+  max-height: 200px;
+  overflow-y: auto;
 `;
 
 const LegendTitle = styled.h4`
@@ -330,54 +369,61 @@ const NERAnalyzer = () => {
   return (
     <Container theme={theme}>
       <Section theme={theme}>
-        <Label theme={theme}>Enter text for NER analysis:</Label>
-        <TextArea
-          theme={theme}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Enter or paste text here for Named Entity Recognition..."
-        />
-        <SampleSelector 
-          samples={NER_SAMPLES} 
-          onSelect={setText}
-          label="Sample Texts for NER Analysis"
-        />
-        <Button
-          theme={theme}
-          onClick={analyzeText}
-          disabled={loading || !text.trim()}
-        >
-          {loading && <LoadingSpinner />}
-          {loading ? 'Analyzing NER...' : 'Analyze NER'}
-        </Button>
+        <GridContainer theme={theme}>
+          <LeftColumn theme={theme}>
+            <Label theme={theme}>Enter text for NER analysis:</Label>
+            <TextArea
+              theme={theme}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Enter or paste text here for Named Entity Recognition..."
+            />
+            <Button
+              theme={theme}
+              onClick={analyzeText}
+              disabled={loading || !text.trim()}
+            >
+              {loading && <LoadingSpinner />}
+              {loading ? 'Analyzing NER...' : 'Analyze NER'}
+            </Button>
+            
+            {error && (
+              <ErrorMessage theme={theme}>
+                <strong>Error:</strong> {error}
+              </ErrorMessage>
+            )}
+          </LeftColumn>
+
+          <RightColumn theme={theme}>
+            <Legend theme={theme}>
+              <LegendTitle theme={theme}>Entity Type Legend</LegendTitle>
+              <LegendGrid theme={theme}>
+                {legendItems.map((item) => (
+                  <LegendItem key={item.entityType} theme={theme}>
+                    <LegendColor entityType={item.entityType} />
+                    <LegendLabel theme={theme}>{item.label}</LegendLabel>
+                  </LegendItem>
+                ))}
+              </LegendGrid>
+            </Legend>
+            
+            <div>
+              <Label theme={theme}>NER Analysis Results:</Label>
+              <HighlightedText theme={theme}>
+                {analysis ? renderHighlightedText() : 'Enter text and click "Analyze NER" to see results...'}
+              </HighlightedText>
+            </div>
+          </RightColumn>
+        </GridContainer>
+
+        <SampleSection theme={theme}>
+          <SampleSelector 
+            samples={NER_SAMPLES} 
+            onSelect={setText}
+            label="Sample Texts for NER Analysis"
+          />
+        </SampleSection>
       </Section>
-
-      {error && (
-        <ErrorMessage theme={theme}>
-          <strong>Error:</strong> {error}
-        </ErrorMessage>
-      )}
-
-      {analysis && (
-        <Section theme={theme}>
-          <Legend theme={theme}>
-            <LegendTitle theme={theme}>Entity Type Legend</LegendTitle>
-            <LegendGrid theme={theme}>
-              {legendItems.map((item) => (
-                <LegendItem key={item.entityType} theme={theme}>
-                  <LegendColor entityType={item.entityType} />
-                  <LegendLabel theme={theme}>{item.label}</LegendLabel>
-                </LegendItem>
-              ))}
-            </LegendGrid>
-          </Legend>
-          
-          <Label theme={theme}>NER Analysis Results:</Label>
-          <HighlightedText theme={theme}>
-            {renderHighlightedText()}
-          </HighlightedText>
-        </Section>
-      )}
     </Container>
   );
 };
