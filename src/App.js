@@ -1,24 +1,54 @@
-import logo from './logo.svg';
+import React, { useState } from 'react';
+import styled from 'styled-components';
+import { ThemeProvider } from './context/ThemeContext';
+import Layout from './components/Layout';
+import POSAnalyzer from './components/POSAnalyzer';
+import NERAnalyzer from './components/NERAnalyzer';
+import Translator from './components/Translator';
+import LanguagesList from './components/LanguagesList';
 import './App.css';
+
+const AppContent = () => {
+  const [activeTab, setActiveTab] = useState('pos');
+
+  const tabs = [
+    { id: 'pos', label: 'POS Analysis' },
+    { id: 'ner', label: 'NER Analysis' },
+    { id: 'translate', label: 'Translation' },
+    { id: 'languages', label: 'Languages' },
+  ];
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'pos':
+        return <POSAnalyzer />;
+      case 'ner':
+        return <NERAnalyzer />;
+      case 'translate':
+        return <Translator />;
+      case 'languages':
+        return <LanguagesList />;
+      default:
+        return <POSAnalyzer />;
+    }
+  };
+
+  return (
+    <Layout 
+      activeTab={activeTab} 
+      onTabChange={setActiveTab} 
+      tabs={tabs}
+    >
+      {renderTabContent()}
+    </Layout>
+  );
+};
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
 
