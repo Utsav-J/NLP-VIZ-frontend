@@ -4,6 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import { apiService } from '../services/api';
 import SampleSelector from './SampleSelector';
 import { DEPENDENCY_SAMPLES } from '../config/samples';
+import ImageModal from './ImageModal';
 
 const Container = styled.div`
   padding: 3rem;
@@ -177,12 +178,53 @@ const SVGContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 
   svg {
     display: block;
     margin: 0 auto;
     max-width: 100%;
     max-height: 100%;
+  }
+`;
+
+const FullScreenButton = styled.button`
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 8px 16px;
+  background: ${props => props.theme.colors.primary};
+  color: white;
+  border: none;
+  border-radius: ${props => props.theme.borderRadius.md};
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+  box-shadow: ${props => props.theme.shadows.sm};
+
+  &:hover {
+    background: ${props => props.theme.colors.secondary};
+    transform: translateY(-1px);
+    box-shadow: ${props => props.theme.shadows.md};
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const FullScreenSVGContainer = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+  svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
   }
 `;
 
@@ -252,6 +294,7 @@ const DependencyParser = () => {
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const STORAGE_KEY = 'dependency_parser_state_v1';
 
   // Load cached state on mount
@@ -329,8 +372,20 @@ const DependencyParser = () => {
     
     return (
       <SVGContainer theme={theme}>
+        <FullScreenButton theme={theme} onClick={() => setIsModalOpen(true)}>
+          🔍 View Full Screen
+        </FullScreenButton>
         <div dangerouslySetInnerHTML={{ __html: processedSVG }} />
       </SVGContainer>
+    );
+  };
+
+  const renderFullScreenSVG = () => {
+    if (!analysis || !analysis.svg) return null;
+    return (
+      <FullScreenSVGContainer>
+        <div dangerouslySetInnerHTML={{ __html: analysis.svg }} />
+      </FullScreenSVGContainer>
     );
   };
 
@@ -420,6 +475,14 @@ const DependencyParser = () => {
           />
         </SampleSection>
       </Section>
+
+      <ImageModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Dependency Parse Tree - Full View"
+      >
+        {renderFullScreenSVG()}
+      </ImageModal>
     </Container>
   );
 };

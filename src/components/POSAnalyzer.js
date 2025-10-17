@@ -5,6 +5,7 @@ import { posColors } from '../theme';
 import { apiService } from '../services/api';
 import SampleSelector from './SampleSelector';
 import { POS_SAMPLES } from '../config/samples';
+import AIHelpPanel from './AIHelpPanel';
 
 const Container = styled.div`
   padding: 3rem;
@@ -238,16 +239,43 @@ const Legend = styled.div`
   background: ${props => props.theme.colors.surfaceSecondary};
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: ${props => props.theme.borderRadius.md};
-  padding: 1rem;
   margin-bottom: 1rem;
-  max-height: 200px;
-  overflow-y: auto;
+  overflow: hidden;
+`;
+
+const LegendHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: ${props => props.theme.colors.border};
+  }
 `;
 
 const LegendTitle = styled.h4`
-  margin: 0 0 0.5rem 0;
+  margin: 0;
   color: ${props => props.theme.colors.text};
   font-size: 14px;
+  font-weight: 600;
+`;
+
+const LegendToggle = styled.span`
+  color: ${props => props.theme.colors.textSecondary};
+  font-size: 12px;
+  transition: transform 0.2s ease;
+  transform: ${props => props.expanded ? 'rotate(180deg)' : 'rotate(0deg)'};
+`;
+
+const LegendContent = styled.div`
+  max-height: ${props => props.expanded ? '200px' : '0'};
+  overflow: ${props => props.expanded ? 'auto' : 'hidden'};
+  transition: max-height 0.3s ease;
+  padding: ${props => props.expanded ? '0 1rem 1rem 1rem' : '0 1rem'};
 `;
 
 const LegendGrid = styled.div`
@@ -281,6 +309,9 @@ const POSAnalyzer = () => {
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [aiHelp, setAiHelp] = useState(null);
+  const [aiHelpLoading, setAiHelpLoading] = useState(false);
+  const [legendExpanded, setLegendExpanded] = useState(true);
   const STORAGE_KEY = 'pos_analyzer_state_v1';
 
   // Load cached state on mount
@@ -321,6 +352,7 @@ const POSAnalyzer = () => {
     try {
       const result = await apiService.analyzePOS(text);
       setAnalysis(result);
+      setAiHelp(null);
     } catch (err) {
       console.error('POS analysis error:', err);
       setError(
@@ -332,6 +364,22 @@ const POSAnalyzer = () => {
       setLoading(false);
     }
   }, [text]);
+
+  const getAIHelp = useCallback(async () => {
+    if (!analysis) return;
+    setAiHelpLoading(true);
+    try {
+      const resultText = JSON.stringify(analysis, null, 2);
+      const help = await apiService.getAIHelp(resultText);
+      setAiHelp(help);
+    } catch (err) {
+      setAiHelp(
+        err.response?.data?.detail || err.message || 'Failed to get AI help.'
+      );
+    } finally {
+      setAiHelpLoading(false);
+    }
+  }, [analysis]);
 
   const renderHighlightedText = () => {
     if (!analysis || !analysis.tokens) return null;
@@ -405,15 +453,20 @@ const POSAnalyzer = () => {
 
           <RightColumn theme={theme}>
             <Legend theme={theme}>
-              <LegendTitle theme={theme}>POS Tag Legend</LegendTitle>
-              <LegendGrid theme={theme}>
-                {legendItems.map((item) => (
-                  <LegendItem key={item.pos} theme={theme}>
-                    <LegendColor pos={item.pos} />
-                    <LegendLabel theme={theme}>{item.label}</LegendLabel>
-                  </LegendItem>
-                ))}
-              </LegendGrid>
+              <LegendHeader theme={theme} onClick={() => setLegendExpanded(!legendExpanded)}>
+                <LegendTitle theme={theme}>POS Tag Legend</LegendTitle>
+                <LegendToggle theme={theme} expanded={legendExpanded}>▼</LegendToggle>
+              </LegendHeader>
+              <LegendContent theme={theme} expanded={legendExpanded}>
+                <LegendGrid theme={theme}>
+                  {legendItems.map((item) => (
+                    <LegendItem key={item.pos} theme={theme}>
+                      <LegendColor pos={item.pos} />
+                      <LegendLabel theme={theme}>{item.label}</LegendLabel>
+                    </LegendItem>
+                  ))}
+                </LegendGrid>
+              </LegendContent>
             </Legend>
             
             <div>
@@ -421,6 +474,15 @@ const POSAnalyzer = () => {
               <HighlightedText theme={theme}>
                 {analysis ? renderHighlightedText() : 'Enter text and click "Analyze POS" to see results...'}
               </HighlightedText>
+              {analysis && (
+                <Button theme={theme} onClick={getAIHelp} disabled={aiHelpLoading} style={{ marginTop: '0.75rem' }}>
+                  {aiHelpLoading && <LoadingSpinner />}
+                  {aiHelpLoading ? 'Getting AI Help...' : 'Get AI Help'}
+                </Button>
+              )}
+              {aiHelp && (
+                <AIHelpPanel title="AI Help: POS Analysis" content={aiHelp} />
+              )}
             </div>
           </RightColumn>
         </GridContainer>

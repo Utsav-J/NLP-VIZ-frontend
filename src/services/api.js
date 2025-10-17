@@ -111,6 +111,16 @@ export const apiService = {
     const response = await api.post('/semantic', { text: text.trim() });
     return response.data; // expected to match SemanticRoleOut
   },
+
+  // AI Help
+  getAIHelp: async (resultText) => {
+    if (!resultText || resultText.trim().length === 0) {
+      throw new Error('Result text cannot be empty');
+    }
+    const response = await api.post('/ai-help', { text: resultText.trim() });
+    // Backend returns a JSON string or plain text; normalize to string
+    return typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
+  },
 };
 
 export default api;

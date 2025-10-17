@@ -5,6 +5,7 @@ import { entityColors } from '../theme';
 import { apiService } from '../services/api';
 import SampleSelector from './SampleSelector';
 import { NER_SAMPLES } from '../config/samples';
+import AIHelpPanel from './AIHelpPanel';
 
 const Container = styled.div`
   padding: 3rem;
@@ -240,16 +241,43 @@ const Legend = styled.div`
   background: ${props => props.theme.colors.surfaceSecondary};
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: ${props => props.theme.borderRadius.md};
-  padding: 1rem;
   margin-bottom: 1rem;
-  max-height: 200px;
-  overflow-y: auto;
+  overflow: hidden;
+`;
+
+const LegendHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: ${props => props.theme.colors.border};
+  }
 `;
 
 const LegendTitle = styled.h4`
-  margin: 0 0 0.5rem 0;
+  margin: 0;
   color: ${props => props.theme.colors.text};
   font-size: 14px;
+  font-weight: 600;
+`;
+
+const LegendToggle = styled.span`
+  color: ${props => props.theme.colors.textSecondary};
+  font-size: 12px;
+  transition: transform 0.2s ease;
+  transform: ${props => props.expanded ? 'rotate(180deg)' : 'rotate(0deg)'};
+`;
+
+const LegendContent = styled.div`
+  max-height: ${props => props.expanded ? '200px' : '0'};
+  overflow: ${props => props.expanded ? 'auto' : 'hidden'};
+  transition: max-height 0.3s ease;
+  padding: ${props => props.expanded ? '0 1rem 1rem 1rem' : '0 1rem'};
 `;
 
 const LegendGrid = styled.div`
@@ -283,6 +311,9 @@ const NERAnalyzer = () => {
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [aiHelp, setAiHelp] = useState(null);
+  const [aiHelpLoading, setAiHelpLoading] = useState(false);
+  const [legendExpanded, setLegendExpanded] = useState(true);
   const STORAGE_KEY = 'ner_analyzer_state_v1';
 
   // Load cached state on mount
@@ -323,6 +354,7 @@ const NERAnalyzer = () => {
     try {
       const result = await apiService.analyzeNER(text);
       setAnalysis(result);
+      setAiHelp(null);
     } catch (err) {
       console.error('NER analysis error:', err);
       setError(
@@ -334,6 +366,22 @@ const NERAnalyzer = () => {
       setLoading(false);
     }
   }, [text]);
+
+  const getAIHelp = useCallback(async () => {
+    if (!analysis) return;
+    setAiHelpLoading(true);
+    try {
+      const resultText = JSON.stringify(analysis, null, 2);
+      const help = await apiService.getAIHelp(resultText);
+      setAiHelp(help);
+    } catch (err) {
+      setAiHelp(
+        err.response?.data?.detail || err.message || 'Failed to get AI help.'
+      );
+    } finally {
+      setAiHelpLoading(false);
+    }
+  }, [analysis]);
 
   const renderHighlightedText = () => {
     if (!analysis || !analysis.entities) return text;
@@ -423,15 +471,20 @@ const NERAnalyzer = () => {
 
           <RightColumn theme={theme}>
             <Legend theme={theme}>
-              <LegendTitle theme={theme}>Entity Type Legend</LegendTitle>
-              <LegendGrid theme={theme}>
-                {legendItems.map((item) => (
-                  <LegendItem key={item.entityType} theme={theme}>
-                    <LegendColor entityType={item.entityType} />
-                    <LegendLabel theme={theme}>{item.label}</LegendLabel>
-                  </LegendItem>
-                ))}
-              </LegendGrid>
+              <LegendHeader theme={theme} onClick={() => setLegendExpanded(!legendExpanded)}>
+                <LegendTitle theme={theme}>Entity Type Legend</LegendTitle>
+                <LegendToggle theme={theme} expanded={legendExpanded}>▼</LegendToggle>
+              </LegendHeader>
+              <LegendContent theme={theme} expanded={legendExpanded}>
+                <LegendGrid theme={theme}>
+                  {legendItems.map((item) => (
+                    <LegendItem key={item.entityType} theme={theme}>
+                      <LegendColor entityType={item.entityType} />
+                      <LegendLabel theme={theme}>{item.label}</LegendLabel>
+                    </LegendItem>
+                  ))}
+                </LegendGrid>
+              </LegendContent>
             </Legend>
             
             <div>
@@ -439,6 +492,15 @@ const NERAnalyzer = () => {
               <HighlightedText theme={theme}>
                 {analysis ? renderHighlightedText() : 'Enter text and click "Analyze NER" to see results...'}
               </HighlightedText>
+              {analysis && (
+                <Button theme={theme} onClick={getAIHelp} disabled={aiHelpLoading} style={{ marginTop: '0.75rem' }}>
+                  {aiHelpLoading && <LoadingSpinner />}
+                  {aiHelpLoading ? 'Getting AI Help...' : 'Get AI Help'}
+                </Button>
+              )}
+              {aiHelp && (
+                <AIHelpPanel title="AI Help: NER Analysis" content={aiHelp} />
+              )}
             </div>
           </RightColumn>
         </GridContainer>

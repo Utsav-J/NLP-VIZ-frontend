@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import Layout from './components/Layout';
 import POSAnalyzer from './components/POSAnalyzer';
@@ -9,9 +10,10 @@ import Translator from './components/Translator';
 import CFGGeminiParser from './components/CFGGeminiParser';
 import SemanticRoleAnalyzer from './components/SemanticRoleAnalyzer';
 import LanguagesList from './components/LanguagesList';
+import LandingPage from './components/LandingPage';
 import './App.css';
 
-const AppContent = () => {
+const MainApp = () => {
   const [activeTab, setActiveTab] = useState('pos');
 
   const tabs = [
@@ -59,7 +61,13 @@ const AppContent = () => {
 function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <Router>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/app" element={<MainApp />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
     </ThemeProvider>
   );
 }
