@@ -84,3 +84,87 @@ export const TRANSLATION_SAMPLES = [
     text: 'Artificial intelligence and machine learning are revolutionizing the way we process data and make decisions in modern businesses.'
   }
 ];
+
+export const DEPENDENCY_SAMPLES = [
+  {
+    id: 'simple',
+    title: 'Simple Sentence',
+    text: 'The quick brown fox jumps over the lazy dog.'
+  },
+  {
+    id: 'complex',
+    title: 'Complex Sentence',
+    text: 'The students who studied hard will receive excellent grades in their final examinations.'
+  },
+  {
+    id: 'question',
+    title: 'Question',
+    text: 'What time does the meeting start tomorrow morning?'
+  },
+  {
+    id: 'relative_clause',
+    title: 'Relative Clause',
+    text: 'The book that I read yesterday was written by a famous author from Paris.'
+  },
+  {
+    id: 'compound',
+    title: 'Compound Sentence',
+    text: 'She loves reading novels, but he prefers watching movies on weekends.'
+  }
+];
+
+export const CFG_GEMINI_SAMPLES = [
+  {
+    id: 'cfg_simple',
+    title: 'Simple Declarative',
+    text: 'The cat sat on the mat.'
+  },
+  {
+    id: 'cfg_question',
+    title: 'Question',
+    text: 'Why did the committee postpone the vote?'
+  },
+  {
+    id: 'cfg_relative',
+    title: 'Relative Clause',
+    text: 'The researcher who reviewed the papers wrote a summary.'
+  },
+  {
+    id: 'cfg_compound',
+    title: 'Compound Sentence',
+    text: 'She finished the report, and he presented the results.'
+  },
+  {
+    id: 'cfg_complex',
+    title: 'Complex Sentence',
+    text: 'Although the weather was terrible, the team completed the experiment on time.'
+  }
+];
+
+export const SRL_SAMPLES = [
+  {
+    id: 'srl_simple',
+    title: 'Simple Predicate-Argument',
+    text: 'The cat sits on the mat.'
+  },
+  {
+    id: 'srl_transfer',
+    title: 'Transfer Event',
+    text: 'Mary gave John a book yesterday at the library.'
+  },
+  {
+    id: 'srl_instrument',
+    title: 'Instrument and Patient',
+    text: 'The chef sliced the vegetables with a sharp knife.'
+  },
+  {
+    id: 'srl_motion',
+    title: 'Motion with Goal',
+    text: 'They traveled to Paris during the summer.'
+  },
+  {
+    id: 'srl_passive',
+    title: 'Passive Voice',
+    text: 'The letter was written by Alice last night.'
+  }
+];

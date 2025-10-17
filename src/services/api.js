@@ -81,6 +81,36 @@ export const apiService = {
     const response = await api.get('/languages');
     return response.data;
   },
+
+  // Dependency parsing
+  analyzeDependency: async (text) => {
+    if (!text || text.trim().length === 0) {
+      throw new Error('Text cannot be empty');
+    }
+    
+    const response = await api.post('/dependency', { text: text.trim() });
+    return response.data;
+  },
+  
+  // CFG parsing via Gemini
+  analyzeCFGGemini: async (text) => {
+    if (!text || text.trim().length === 0) {
+      throw new Error('Text cannot be empty');
+    }
+
+    const response = await api.post('/cfg-gemini', { text: text.trim() });
+    return response.data; // expected to match GeminiCFGParseOut
+  },
+
+  // Semantic Role Labeling via Gemini
+  analyzeSemantic: async (text) => {
+    if (!text || text.trim().length === 0) {
+      throw new Error('Text cannot be empty');
+    }
+
+    const response = await api.post('/semantic', { text: text.trim() });
+    return response.data; // expected to match SemanticRoleOut
+  },
 };
 
 export default api;

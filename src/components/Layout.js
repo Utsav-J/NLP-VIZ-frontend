@@ -53,6 +53,19 @@ const Logo = styled.h1`
   color: ${props => props.theme.colors.primary};
 `;
 
+const Brand = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const BrandLogo = styled.img`
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  box-shadow: ${props => props.theme.shadows.sm};
+`;
+
 const Main = styled.main`
   max-width: 1400px;
   margin: 0 auto;
@@ -124,7 +137,10 @@ const Layout = ({ children, activeTab, onTabChange, tabs }) => {
     <LayoutContainer theme={theme}>
       <Header theme={theme}>
         <HeaderContent theme={theme}>
-          <Logo theme={theme}>NLP Analysis API</Logo>
+			<Brand theme={theme}>
+				<BrandLogo theme={theme} src={process.env.PUBLIC_URL + '/logo.png'} alt="App Logo" />
+				<Logo theme={theme}>LexiView: NLP Visualization System</Logo>
+			</Brand>
           <HeaderControls theme={theme}>
             <StatusIndicator />
             <ThemeToggle />

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 import { useTheme } from '../context/ThemeContext';
 import { posColors } from '../theme';
@@ -281,6 +281,33 @@ const POSAnalyzer = () => {
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const STORAGE_KEY = 'pos_analyzer_state_v1';
+
+  // Load cached state on mount
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed === 'object') {
+          if (typeof parsed.text === 'string') setText(parsed.text);
+          if (parsed.analysis) setAnalysis(parsed.analysis);
+        }
+      }
+    } catch (_) {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist state
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ text, analysis }));
+    } catch (_) {
+      // ignore
+    }
+  }, [text, analysis]);
 
   const analyzeText = useCallback(async () => {
     if (!text.trim()) {

@@ -1,10 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 import { useTheme } from '../context/ThemeContext';
-import { entityColors } from '../theme';
 import { apiService } from '../services/api';
 import SampleSelector from './SampleSelector';
-import { NER_SAMPLES } from '../config/samples';
+import { DEPENDENCY_SAMPLES } from '../config/samples';
 
 const Container = styled.div`
   padding: 3rem;
@@ -130,86 +129,6 @@ const Button = styled.button`
   }
 `;
 
-const HighlightedText = styled.div`
-  background: ${props => props.theme.colors.surface};
-  border: 2px solid ${props => props.theme.colors.border};
-  border-radius: ${props => props.theme.borderRadius.lg};
-  padding: 2rem;
-  font-size: 16px;
-  line-height: 1.8;
-  min-height: 300px;
-  max-height: 400px;
-  overflow-y: auto;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  word-break: break-word;
-
-  @media (max-width: 768px) {
-    min-height: 250px;
-    max-height: 350px;
-    font-size: 15px;
-    padding: 1.5rem;
-  }
-
-  @media (max-width: 480px) {
-    min-height: 200px;
-    max-height: 300px;
-    padding: 1.25rem;
-    font-size: 14px;
-  }
-`;
-
-const Entity = styled.span`
-  position: relative;
-  background: ${props => entityColors[props.entityType] || entityColors.default}40;
-  border: 2px solid ${props => entityColors[props.entityType] || entityColors.default};
-  border-radius: 4px;
-  padding: 2px 6px;
-  margin: 1px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 600;
-
-  &:hover {
-    background: ${props => entityColors[props.entityType] || entityColors.default}60;
-    transform: translateY(-1px);
-  }
-`;
-
-const Tooltip = styled.div`
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: ${props => props.theme.colors.surface};
-  color: ${props => props.theme.colors.text};
-  padding: 8px 12px;
-  border-radius: ${props => props.theme.borderRadius.md};
-  border: 1px solid ${props => props.theme.colors.border};
-  box-shadow: ${props => props.theme.shadows.lg};
-  font-size: 12px;
-  white-space: nowrap;
-  z-index: 1000;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.2s ease;
-
-  ${Entity}:hover & {
-    opacity: 1;
-    visibility: visible;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 5px solid transparent;
-    border-top-color: ${props => props.theme.colors.surface};
-  }
-`;
-
 const ErrorMessage = styled.div`
   background: ${props => props.theme.colors.error}20;
   color: ${props => props.theme.colors.error};
@@ -236,54 +155,104 @@ const LoadingSpinner = styled.div`
   }
 `;
 
-const Legend = styled.div`
+const ResultContainer = styled.div`
+  background: ${props => props.theme.colors.surface};
+  border: 2px solid ${props => props.theme.colors.border};
+  border-radius: ${props => props.theme.borderRadius.lg};
+  padding: 2rem;
+  min-height: 300px;
+  max-height: 600px;
+  overflow-y: auto;
+  overflow-x: auto;
+`;
+
+const SVGContainer = styled.div`
+  width: 100%;
+  max-height: 400px;
+  overflow: auto;
+  border: 1px solid ${props => props.theme.colors.border};
+  border-radius: ${props => props.theme.borderRadius.md};
+  background: white;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    max-height: 100%;
+  }
+`;
+
+const DependencyTable = styled.div`
+  margin-top: 2rem;
   background: ${props => props.theme.colors.surfaceSecondary};
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: ${props => props.theme.borderRadius.md};
-  padding: 1rem;
-  margin-bottom: 1rem;
-  max-height: 200px;
-  overflow-y: auto;
+  overflow: hidden;
 `;
 
-const LegendTitle = styled.h4`
-  margin: 0 0 0.5rem 0;
+const TableHeader = styled.div`
+  background: ${props => props.theme.colors.border};
+  padding: 1rem;
+  font-weight: 600;
   color: ${props => props.theme.colors.text};
   font-size: 14px;
 `;
 
-const LegendGrid = styled.div`
+const TableContent = styled.div`
+  max-height: 300px;
+  overflow-y: auto;
+`;
+
+const TableRow = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 0.5rem;
-  font-size: 12px;
-`;
-
-const LegendItem = styled.div`
-  display: flex;
+  grid-template-columns: 1fr 1fr 1fr 1fr 2fr;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid ${props => props.theme.colors.border};
+  font-size: 13px;
   align-items: center;
-  gap: 6px;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:nth-child(even) {
+    background: ${props => props.theme.colors.surface};
+  }
 `;
 
-const LegendColor = styled.div`
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  background: ${props => entityColors[props.entityType] || entityColors.default}40;
-  border: 2px solid ${props => entityColors[props.entityType] || entityColors.default};
+const TableCell = styled.div`
+  color: ${props => props.theme.colors.text};
+  word-break: break-word;
 `;
 
-const LegendLabel = styled.span`
+const TableHeaderCell = styled.div`
   color: ${props => props.theme.colors.textSecondary};
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 `;
 
-const NERAnalyzer = () => {
+const PlaceholderText = styled.div`
+  text-align: center;
+  color: ${props => props.theme.colors.textMuted};
+  padding: 3rem;
+  font-size: 16px;
+  line-height: 1.6;
+`;
+
+const DependencyParser = () => {
   const { theme } = useTheme();
   const [text, setText] = useState('');
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const STORAGE_KEY = 'ner_analyzer_state_v1';
+  const STORAGE_KEY = 'dependency_parser_state_v1';
 
   // Load cached state on mount
   useEffect(() => {
@@ -321,10 +290,10 @@ const NERAnalyzer = () => {
     setError(null);
 
     try {
-      const result = await apiService.analyzeNER(text);
+      const result = await apiService.analyzeDependency(text);
       setAnalysis(result);
     } catch (err) {
-      console.error('NER analysis error:', err);
+      console.error('Dependency analysis error:', err);
       setError(
         err.response?.data?.detail || 
         err.message || 
@@ -335,75 +304,78 @@ const NERAnalyzer = () => {
     }
   }, [text]);
 
-  const renderHighlightedText = () => {
-    if (!analysis || !analysis.entities) return text;
-
-    const entities = analysis.entities;
-    const textArray = text.split('');
+  const renderSVG = () => {
+    if (!analysis || !analysis.svg) return null;
     
-    // Create a map of character positions to entities
-    const entityMap = {};
-    entities.forEach(entity => {
-      for (let i = entity.start; i < entity.end; i++) {
-        entityMap[i] = entity;
+    // Extract SVG dimensions and resize to fit container
+    const processedSVG = analysis.svg.replace(
+      /width="([^"]*)"\s+height="([^"]*)"/,
+      (match, width, height) => {
+        const originalWidth = parseFloat(width);
+        const originalHeight = parseFloat(height);
+        const containerWidth = 600; // Approximate container width
+        const containerHeight = 400; // Max container height
+        
+        const scaleX = containerWidth / originalWidth;
+        const scaleY = containerHeight / originalHeight;
+        const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
+        
+        const newWidth = Math.round(originalWidth * scale);
+        const newHeight = Math.round(originalHeight * scale);
+        
+        return `width="${newWidth}" height="${newHeight}"`;
       }
-    });
-
-    return textArray.map((char, index) => {
-      const entity = entityMap[index];
-      
-      if (entity && index === entity.start) {
-        // Start of entity - render the full entity span
-        const entityText = text.slice(entity.start, entity.end);
-        return (
-          <Entity
-            key={index}
-            theme={theme}
-            entityType={entity.label}
-            title={`${entity.label}: ${entity.text}`}
-          >
-            {entityText}
-            <Tooltip theme={theme}>
-              <strong>{entity.label}</strong><br />
-              Text: {entity.text}<br />
-              Position: {entity.start}-{entity.end}
-            </Tooltip>
-          </Entity>
-        );
-      } else if (entityMap[index]) {
-        // Middle or end of entity - don't render (already handled above)
-        return null;
-      } else {
-        // Regular character
-        return char;
-      }
-    }).filter(Boolean);
+    );
+    
+    return (
+      <SVGContainer theme={theme}>
+        <div dangerouslySetInnerHTML={{ __html: processedSVG }} />
+      </SVGContainer>
+    );
   };
 
-  const legendItems = [
-    { entityType: 'PERSON', label: 'Person' },
-    { entityType: 'ORG', label: 'Organization' },
-    { entityType: 'GPE', label: 'Geopolitical Entity' },
-    { entityType: 'MONEY', label: 'Money' },
-    { entityType: 'DATE', label: 'Date' },
-    { entityType: 'TIME', label: 'Time' },
-    { entityType: 'PERCENT', label: 'Percentage' },
-    { entityType: 'LOC', label: 'Location' },
-    { entityType: 'EVENT', label: 'Event' },
-    { entityType: 'WORK_OF_ART', label: 'Work of Art' },
-  ];
+  const renderDependencyTable = () => {
+    if (!analysis || !analysis.dependencies) return null;
+
+    return (
+      <DependencyTable theme={theme}>
+        <TableHeader theme={theme}>
+          <TableRow theme={theme}>
+            <TableHeaderCell theme={theme}>Token</TableHeaderCell>
+            <TableHeaderCell theme={theme}>POS</TableHeaderCell>
+            <TableHeaderCell theme={theme}>Dependency</TableHeaderCell>
+            <TableHeaderCell theme={theme}>Head</TableHeaderCell>
+            <TableHeaderCell theme={theme}>Children</TableHeaderCell>
+          </TableRow>
+        </TableHeader>
+        <TableContent theme={theme}>
+          {analysis.dependencies.map((dep, index) => (
+            <TableRow key={index} theme={theme}>
+              <TableCell theme={theme}>{dep.token}</TableCell>
+              <TableCell theme={theme}>{dep.pos}</TableCell>
+              <TableCell theme={theme}>{dep.dep}</TableCell>
+              <TableCell theme={theme}>{dep.head}</TableCell>
+              <TableCell theme={theme}>
+                {dep.children.length > 0 ? dep.children.join(', ') : '—'}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableContent>
+      </DependencyTable>
+    );
+  };
 
   return (
     <Container theme={theme}>
       <Section theme={theme}>
         <GridContainer theme={theme}>
           <LeftColumn theme={theme}>
-            <Label theme={theme}>Enter text for NER analysis:</Label>
+            <Label theme={theme}>Enter text for dependency parsing:</Label>
             <TextArea
               theme={theme}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Enter or paste text here for Named Entity Recognition..."
+              placeholder="Enter a single sentence for dependency parsing analysis..."
             />
             <Button
               theme={theme}
@@ -411,7 +383,7 @@ const NERAnalyzer = () => {
               disabled={loading || !text.trim()}
             >
               {loading && <LoadingSpinner />}
-              {loading ? 'Analyzing NER...' : 'Analyze NER'}
+              {loading ? 'Analyzing...' : 'Analyze Dependencies'}
             </Button>
             
             {error && (
@@ -422,32 +394,29 @@ const NERAnalyzer = () => {
           </LeftColumn>
 
           <RightColumn theme={theme}>
-            <Legend theme={theme}>
-              <LegendTitle theme={theme}>Entity Type Legend</LegendTitle>
-              <LegendGrid theme={theme}>
-                {legendItems.map((item) => (
-                  <LegendItem key={item.entityType} theme={theme}>
-                    <LegendColor entityType={item.entityType} />
-                    <LegendLabel theme={theme}>{item.label}</LegendLabel>
-                  </LegendItem>
-                ))}
-              </LegendGrid>
-            </Legend>
-            
             <div>
-              <Label theme={theme}>NER Analysis Results:</Label>
-              <HighlightedText theme={theme}>
-                {analysis ? renderHighlightedText() : 'Enter text and click "Analyze NER" to see results...'}
-              </HighlightedText>
+              <Label theme={theme}>Dependency Analysis Results:</Label>
+              <ResultContainer theme={theme}>
+                {analysis ? (
+                  <>
+                    {renderSVG()}
+                    {renderDependencyTable()}
+                  </>
+                ) : (
+                  <PlaceholderText theme={theme}>
+                    Enter a sentence and click "Analyze Dependencies" to see the dependency tree and relationships...
+                  </PlaceholderText>
+                )}
+              </ResultContainer>
             </div>
           </RightColumn>
         </GridContainer>
 
         <SampleSection theme={theme}>
           <SampleSelector 
-            samples={NER_SAMPLES} 
+            samples={DEPENDENCY_SAMPLES} 
             onSelect={setText}
-            label="Sample Texts for NER Analysis"
+            label="Sample Sentences for Dependency Parsing"
           />
         </SampleSection>
       </Section>
@@ -455,4 +424,4 @@ const NERAnalyzer = () => {
   );
 };
 
-export default NERAnalyzer;
+export default DependencyParser;

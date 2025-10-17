@@ -246,9 +246,25 @@ const Translator = () => {
   const [translation, setTranslation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const STORAGE_KEY = 'translator_state_v1';
 
-  // Load supported languages on component mount
+  // Load cached state and supported languages on component mount
   useEffect(() => {
+    // Load cached state
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed === 'object') {
+          if (typeof parsed.text === 'string') setText(parsed.text);
+          if (typeof parsed.targetLanguage === 'string') setTargetLanguage(parsed.targetLanguage);
+          if (parsed.translation) setTranslation(parsed.translation);
+        }
+      }
+    } catch (_) {
+      // ignore
+    }
+
     const loadLanguages = async () => {
       try {
         const langs = await apiService.getLanguages();
@@ -261,6 +277,18 @@ const Translator = () => {
 
     loadLanguages();
   }, []);
+
+  // Persist state
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ text, targetLanguage, translation })
+      );
+    } catch (_) {
+      // ignore
+    }
+  }, [text, targetLanguage, translation]);
 
   const translateText = useCallback(async () => {
     if (!text.trim()) {
