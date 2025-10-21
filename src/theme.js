@@ -63,7 +63,7 @@ export const posColors = {
   ADJ: '#f87171',
   ADV: '#60a5fa',
   PRON: '#a78bfa',
-  DET: '#fb7185',
+  DET: '#fb923c',
   ADP: '#fde047',
   CONJ: '#86efac',
   CCONJ: '#86efac',

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
@@ -191,7 +191,12 @@ const CTAButton = styled.button`
   }
 `;
 
-const SecondaryButton = styled.a`
+const DropdownContainer = styled.div`
+  position: relative;
+  display: inline-block;
+`;
+
+const SecondaryButton = styled.button`
   padding: 18px 48px;
   font-size: 1.2rem;
   font-weight: 700;
@@ -215,6 +220,46 @@ const SecondaryButton = styled.a`
 
   &:active {
     transform: translateY(-2px);
+  }
+`;
+
+const DropdownMenu = styled.div`
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: ${props => props.theme.colors.surface};
+  border: 2px solid ${props => props.theme.colors.primary};
+  border-radius: ${props => props.theme.borderRadius.md};
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  opacity: ${props => props.isOpen ? 1 : 0};
+  visibility: ${props => props.isOpen ? 'visible' : 'hidden'};
+  transform: ${props => props.isOpen ? 'translateY(0)' : 'translateY(-10px)'};
+  transition: all 0.3s ease;
+  z-index: 1000;
+  min-width: 200px;
+`;
+
+const DropdownItem = styled.a`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  color: ${props => props.theme.colors.text};
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    background: ${props => props.theme.colors.primary};
+    color: white;
+  }
+
+  &:not(:last-child) {
+    border-bottom: 1px solid ${props => props.theme.colors.border};
   }
 `;
 
@@ -328,6 +373,22 @@ const Footer = styled.footer`
 const LandingPage = () => {
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const features = [
     {
@@ -389,14 +450,35 @@ const LandingPage = () => {
           <CTAButton theme={theme} onClick={() => navigate('/app')}>
             Get Started →
           </CTAButton>
-          <SecondaryButton 
-            theme={theme} 
-            href="https://github.com/Utsav-J/" 
-            target="_blank" 
-            rel="noopener noreferrer"
-          >
-            <span>⭐</span> Visit the Repo
-          </SecondaryButton>
+          <DropdownContainer ref={dropdownRef}>
+            <SecondaryButton 
+              theme={theme} 
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            >
+              <span>⭐</span> Visit the Repo
+              <span style={{ marginLeft: '4px' }}>{isDropdownOpen ? '▲' : '▼'}</span>
+            </SecondaryButton>
+            <DropdownMenu theme={theme} isOpen={isDropdownOpen}>
+              <DropdownItem 
+                theme={theme}
+                href="https://github.com/Utsav-J/NLP-VIZ-frontend" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                onClick={() => setIsDropdownOpen(false)}
+              >
+                <span>🎨</span> Frontend
+              </DropdownItem>
+              <DropdownItem 
+                theme={theme}
+                href="https://github.com/Utsav-J/NLP-VIZ" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                onClick={() => setIsDropdownOpen(false)}
+              >
+                <span>⚙️</span> Backend
+              </DropdownItem>
+            </DropdownMenu>
+          </DropdownContainer>
         </ButtonContainer>
       </HeroSection>
 
